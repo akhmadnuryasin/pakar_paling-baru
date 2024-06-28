@@ -27,58 +27,61 @@ import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { Separator } from '@radix-ui/react-dropdown-menu';
 
+interface Rule {
+  id: number;
+  rule_kondisi: string;
+  hasil: string;
+}
+
 export default function Rule() {
-  const [ruleList, setRuleList] = useState<any[]>([]);
-  const [filteredRules, setFilteredRules] = useState<any[]>([]);
+  const [ruleList, setRuleList] = useState<Rule[]>([]);
+  const [filteredRules, setFilteredRules] = useState<Rule[]>([]);
   const [sortOrder, setSortOrder] = useState<'ascending' | 'descending'>('ascending');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
   const [ruleKondisi, setRuleKondisi] = useState<string>('');
   const [hasil, setHasil] = useState<string>('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    filterAndSortRules();
-  }, [ruleList, searchTerm, sortOrder]);
-
   const fetchData = async () => {
     try {
-      const response = await axios.get('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/rule');
+      const response = await axios.get<Rule[]>('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/rule');
       setRuleList(response.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error.message);
+      console.error('Error fetching data:', (error as Error).message);
     }
   };
 
-  const filterAndSortRules = () => {
-    let filtered = [...ruleList];
+  useEffect(() => {
+    const filterAndSortRules = () => {
+      let filtered = [...ruleList];
 
-    if (searchTerm) {
-      filtered = filtered.filter(rule =>
-        rule.hasil.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    const sorted = [...filtered].sort((a, b) => {
-      if (a.hasil && b.hasil) {
-        return sortOrder === 'ascending' ? a.hasil.localeCompare(b.hasil) : b.hasil.localeCompare(a.hasil);
-      } else {
-        return 0;
+      if (searchTerm) {
+        filtered = filtered.filter(rule =>
+          rule.hasil.toLowerCase().includes(searchTerm.toLowerCase())
+        );
       }
-    });
 
-    setFilteredRules(sorted);
-  };
+      const sorted = [...filtered].sort((a, b) => {
+        if (a.hasil && b.hasil) {
+          return sortOrder === 'ascending' ? a.hasil.localeCompare(b.hasil) : b.hasil.localeCompare(a.hasil);
+        } else {
+          return 0;
+        }
+      });
+
+      setFilteredRules(sorted);
+    };
+
+    fetchData();
+    filterAndSortRules();
+  }, [ruleList, searchTerm, sortOrder]); 
 
   const handleDeleteRule = async (id: number) => {
     try {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/rule/${id}`);
       setRuleList(ruleList.filter(rule => rule.id !== id));
     } catch (error) {
-      console.error('Error deleting rule:', error.message);
+      console.error('Error deleting rule:', (error as Error).message);
     }
   };
 
@@ -92,16 +95,16 @@ export default function Rule() {
 
   const handleSubmitTambah = async () => {
     try {
-      const response = await axios.post('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/rule', {
+      const response = await axios.post<Rule>('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/rule', {
         rule_kondisi: ruleKondisi,
         hasil: hasil
       });
       setRuleList([...ruleList, response.data]);
       setRuleKondisi('');
       setHasil('');
-      fetchData(); // Ambil data baru setelah tambah
+      fetchData(); 
     } catch (error) {
-      console.error('Error adding rule:', error.message);
+      console.error('Error adding rule:', (error as Error).message);
     }
   };
 
@@ -121,9 +124,9 @@ export default function Rule() {
       setEditingRuleId(null);
       setRuleKondisi('');
       setHasil('');
-      fetchData(); // Ambil data baru setelah edit
+      fetchData(); 
     } catch (error) {
-      console.error('Error editing rule:', error.message);
+      console.error('Error editing rule:', (error as Error).message);
     }
   };
 

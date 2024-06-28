@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import {
   Layout,
@@ -29,39 +29,34 @@ import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { toast } from 'sonner';
 
+interface KerusakanType {
+  id: number;
+  kode_kerusakan: string;
+  kerusakan: string;
+}
+
 export default function Kerusakan() {
-  const [kerusakanList, setKerusakanList] = useState([]);
-  const [filteredKerusakan, setFilteredKerusakan] = useState([]);
+  const [kerusakanList, setKerusakanList] = useState<KerusakanType[]>([]);
+  const [filteredKerusakan, setFilteredKerusakan] = useState<KerusakanType[]>([]);
   const [sortOrder, setSortOrder] = useState('ascending');
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingKerusakan, setEditingKerusakan] = useState(null);
+  const [editingKerusakan, setEditingKerusakan] = useState<KerusakanType | null>(null);
   const [newKerusakan, setNewKerusakan] = useState('');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    filterAndSortKerusakan();
-  }, [kerusakanList, searchTerm, sortOrder]);
-
   const fetchData = async () => {
     try {
       const response = await axios.get('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/damage');
       setKerusakanList(response.data || []);
-      setLoading(false);
     } catch (error) {
-      console.error('Error fetching data:', error.message);
-      setLoading(false);
+      console.error('Error fetching data:', (error as Error).message);
     }
   };
 
-  useEffect(() => {
-    filterAndSortKerusakan(); // Trigger filter and sort when editingKerusakan changes
-  }, [editingKerusakan]);
-
-  const filterAndSortKerusakan = () => {
+  const filterAndSortKerusakan = useCallback(() => {
     let filtered = [...kerusakanList];
 
     if (searchTerm) {
@@ -79,36 +74,40 @@ export default function Kerusakan() {
     });
 
     setFilteredKerusakan(sorted);
-  };
+  }, [kerusakanList, searchTerm, sortOrder]);
 
-  const handleDeleteKerusakan = async (id) => {
+  useEffect(() => {
+    filterAndSortKerusakan();
+  }, [kerusakanList, searchTerm, sortOrder, filterAndSortKerusakan]);
+
+  const handleDeleteKerusakan = async (id: number) => {
     try {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/damage/${id}`);
       setKerusakanList(kerusakanList.filter(kerusakan => kerusakan.id !== id));
-      filterAndSortKerusakan(); // Update filtered list after deletion
-      toast('Kerusakan berhasil dihapus.', { type: 'success' });
+      filterAndSortKerusakan();
+      toast('Kerusakan berhasil dihapus.');
     } catch (error) {
-      console.error('Error deleting kerusakan:', error.message);
-      toast('Terjadi kesalahan saat menghapus kerusakan.', { type: 'error' });
+      console.error('Error deleting kerusakan:', (error as Error).message);
+      toast('Terjadi kesalahan saat menghapus kerusakan.');
     }
   };
 
   const handleEditKerusakan = async () => {
     if (!editingKerusakan) return;
-  
+
     try {
       const response = await axios.put(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/damage/${editingKerusakan.id}`, editingKerusakan);
       const updatedKerusakanList = kerusakanList.map(kerusakan => (kerusakan.id === response.data.id ? response.data : kerusakan));
       setKerusakanList(updatedKerusakanList);
       setEditingKerusakan(null);
-      fetchData(); // Fetch updated data after edit
-      toast('Kerusakan berhasil diubah.', { type: 'success' });
+      fetchData();
+      toast('Kerusakan berhasil diubah.');
     } catch (error) {
-      console.error('Error editing kerusakan:', error.message);
-      toast('Terjadi kesalahan saat mengubah kerusakan.', { type: 'error' });
+      console.error('Error editing kerusakan:', (error as Error).message);
+      toast('Terjadi kesalahan saat mengubah kerusakan.');
     }
   };
-  
+
   const handleAddKerusakan = async () => {
     try {
       const response = await axios.post('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/damage', {
@@ -117,15 +116,15 @@ export default function Kerusakan() {
       const updatedKerusakanList = [...kerusakanList, response.data];
       setKerusakanList(updatedKerusakanList);
       setNewKerusakan('');
-      fetchData(); // Fetch updated data after add
-      toast('Kerusakan berhasil ditambahkan.', { type: 'success' });
+      fetchData();
+      toast('Kerusakan berhasil ditambahkan.');
     } catch (error) {
-      console.error('Error adding kerusakan:', error.message);
-      toast('Terjadi kesalahan saat menambah kerusakan.', { type: 'error' });
+      console.error('Error adding kerusakan:', (error as Error).message);
+      toast('Terjadi kesalahan saat menambah kerusakan.');
     }
   };
 
-  const openEditForm = (kerusakan) => {
+  const openEditForm = (kerusakan: KerusakanType) => {
     setEditingKerusakan(kerusakan);
   };
 
@@ -133,11 +132,11 @@ export default function Kerusakan() {
     setEditingKerusakan(null);
   };
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleSortChange = (value) => {
+  const handleSortChange = (value: string) => {
     setSortOrder(value);
   };
 
@@ -238,7 +237,16 @@ export default function Kerusakan() {
   );
 }
 
-function KerusakanRow({ kerusakan, editingKerusakan, onEdit, onDelete, onEditSave, onCancelEdit }) {
+interface KerusakanRowProps {
+  kerusakan: KerusakanType;
+  editingKerusakan: KerusakanType | null;
+  onEdit: (kerusakan: KerusakanType) => void;
+  onDelete: (id: number) => void;
+  onEditSave: () => void;
+  onCancelEdit: () => void;
+}
+
+function KerusakanRow({ kerusakan, editingKerusakan, onEdit, onDelete, onEditSave, onCancelEdit }: KerusakanRowProps) {
   const isEditing = editingKerusakan && editingKerusakan.id === kerusakan.id;
 
   const handleEdit = () => {
@@ -253,7 +261,7 @@ function KerusakanRow({ kerusakan, editingKerusakan, onEdit, onDelete, onEditSav
     try {
       await onEditSave();
     } catch (error) {
-      console.error('Error saving kerusakan:', error.message);
+      console.error('Error saving kerusakan:', (error as Error).message);
     }
   };
 

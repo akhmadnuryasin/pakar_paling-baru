@@ -30,12 +30,6 @@ const router = createBrowserRouter([
         }),
       },
       {
-        path: 'e-learning',
-        lazy: async () => ({
-          Component: (await import('@/pages/elearning')).default,
-        }),
-      },
-      {
         path: 'probabilitas',
         lazy: async () => ({
           Component: (await import('@/pages/probabilitas')).default,
@@ -45,12 +39,6 @@ const router = createBrowserRouter([
         path: 'knowledge_base',
         lazy: async () => ({
           Component: (await import('@/pages/knowledge_base')).default,
-        }),
-      },
-      {
-        path: 'konsultasi',
-        lazy: async () => ({
-          Component: (await import('@/pages/daftar_guru')).default,
         }),
       },
       {

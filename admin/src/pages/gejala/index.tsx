@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import {
   Layout,
@@ -29,39 +29,34 @@ import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { toast } from 'sonner';
 
+interface GejalaType {
+  id: number;
+  kode_gejala: string;
+  gejala: string;
+}
+
 export default function Gejala() {
-  const [gejalaList, setGejalaList] = useState([]);
-  const [filteredGejala, setFilteredGejala] = useState([]);
+  const [gejalaList, setGejalaList] = useState<GejalaType[]>([]);
+  const [filteredGejala, setFilteredGejala] = useState<GejalaType[]>([]);
   const [sortOrder, setSortOrder] = useState('ascending');
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingGejala, setEditingGejala] = useState(null);
+  const [editingGejala, setEditingGejala] = useState<GejalaType | null>(null);
   const [newGejala, setNewGejala] = useState('');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    filterAndSortGejala();
-  }, [gejalaList, searchTerm, sortOrder]);
-
   const fetchData = async () => {
     try {
       const response = await axios.get('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptom');
       setGejalaList(response.data || []);
-      setLoading(false);
     } catch (error) {
-      console.error('Error fetching data:', error.message);
-      setLoading(false);
+      console.error('Error fetching data:', (error as Error).message);
     }
   };
 
-  useEffect(() => {
-    filterAndSortGejala(); // Trigger filter and sort when editingGejala changes
-  }, [editingGejala]);
-
-  const filterAndSortGejala = () => {
+  const filterAndSortGejala = useCallback(() => {
     let filtered = [...gejalaList];
 
     if (searchTerm) {
@@ -79,36 +74,40 @@ export default function Gejala() {
     });
 
     setFilteredGejala(sorted);
-  };
+  }, [gejalaList, searchTerm, sortOrder]);
 
-  const handleDeleteGejala = async (id) => {
+  useEffect(() => {
+    filterAndSortGejala();
+  }, [gejalaList, searchTerm, sortOrder, filterAndSortGejala]);
+
+  const handleDeleteGejala = async (id: number) => {
     try {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptom/${id}`);
       setGejalaList(gejalaList.filter(gejala => gejala.id !== id));
-      filterAndSortGejala(); // Update filtered list after deletion
-      toast('Gejala berhasil dihapus.', { type: 'success' });
+      filterAndSortGejala();
+      toast('Gejala berhasil dihapus.');
     } catch (error) {
-      console.error('Error deleting gejala:', error.message);
-      toast('Terjadi kesalahan saat menghapus gejala.', { type: 'error' });
+      console.error('Error deleting gejala:', (error as Error).message);
+      toast('Terjadi kesalahan saat menghapus gejala.');
     }
   };
 
   const handleEditGejala = async () => {
     if (!editingGejala) return;
-  
+
     try {
       const response = await axios.put(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptom/${editingGejala.id}`, editingGejala);
       const updatedGejalaList = gejalaList.map(gejala => (gejala.id === response.data.id ? response.data : gejala));
       setGejalaList(updatedGejalaList);
       setEditingGejala(null);
-      fetchData(); // Fetch updated data after edit
-      toast('Gejala berhasil diubah.', { type: 'success' });
+      fetchData();
+      toast('Gejala berhasil diubah.');
     } catch (error) {
-      console.error('Error editing gejala:', error.message);
-      toast('Terjadi kesalahan saat mengubah gejala.', { type: 'error' });
+      console.error('Error editing gejala:', (error as Error).message);
+      toast('Terjadi kesalahan saat mengubah gejala.');
     }
   };
-  
+
   const handleAddGejala = async () => {
     try {
       const response = await axios.post('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptom', {
@@ -117,15 +116,15 @@ export default function Gejala() {
       const updatedGejalaList = [...gejalaList, response.data];
       setGejalaList(updatedGejalaList);
       setNewGejala('');
-      fetchData(); // Fetch updated data after add
-      toast('Gejala berhasil ditambahkan.', { type: 'success' });
+      fetchData();
+      toast('Gejala berhasil ditambahkan.');
     } catch (error) {
-      console.error('Error adding gejala:', error.message);
-      toast('Terjadi kesalahan saat menambah gejala.', { type: 'error' });
+      console.error('Error adding gejala:', (error as Error).message);
+      toast('Terjadi kesalahan saat menambah gejala.');
     }
   };
 
-  const openEditForm = (gejala) => {
+  const openEditForm = (gejala: GejalaType) => {
     setEditingGejala(gejala);
   };
 
@@ -133,11 +132,11 @@ export default function Gejala() {
     setEditingGejala(null);
   };
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleSortChange = (value) => {
+  const handleSortChange = (value: string) => {
     setSortOrder(value);
   };
 
@@ -159,7 +158,6 @@ export default function Gejala() {
     </BreadcrumbItem>
   ));
 
-  
   return (
     <Layout fadedBelow fixedHeight>
       <LayoutHeader>
@@ -239,7 +237,16 @@ export default function Gejala() {
   );
 }
 
-function GejalaRow({ gejala, editingGejala, onEdit, onDelete, onEditSave, onCancelEdit }) {
+interface GejalaRowProps {
+  gejala: GejalaType;
+  editingGejala: GejalaType | null;
+  onEdit: (gejala: GejalaType) => void;
+  onDelete: (id: number) => void;
+  onEditSave: () => void;
+  onCancelEdit: () => void;
+}
+
+function GejalaRow({ gejala, editingGejala, onEdit, onDelete, onEditSave, onCancelEdit }: GejalaRowProps) {
   const isEditing = editingGejala && editingGejala.id === gejala.id;
 
   const handleEdit = () => {
@@ -254,7 +261,7 @@ function GejalaRow({ gejala, editingGejala, onEdit, onDelete, onEditSave, onCanc
     try {
       await onEditSave();
     } catch (error) {
-      console.error('Error saving gejala:', error.message);
+      console.error('Error saving gejala:', (error as Error).message);
     }
   };
 

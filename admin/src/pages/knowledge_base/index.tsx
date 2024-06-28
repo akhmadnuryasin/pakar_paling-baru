@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useEffect, useState } from 'react';
+import axios, { AxiosError } from 'axios';
 import {
   Layout,
   LayoutBody,
@@ -26,16 +26,28 @@ import {
 import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 import { Separator } from '@radix-ui/react-dropdown-menu';
-import Kerusakan from '../kerusakan';
+
+interface Kerusakan {
+  id: string;
+  kode_kerusakan: string;
+  kode_gejala: string;
+  bobot_gejala: string;
+}
+
+interface NewEntry {
+  kode_kerusakan: string;
+  kode_gejala: string;
+  bobot_gejala: string;
+}
 
 export default function Gejala() {
-  const [kerusakanList, setKerusakanList] = useState([]);
-  const [filteredKerusakan, setFilteredKerusakan] = useState([]);
-  const [sortOrder, setSortOrder] = useState('ascending');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [editingRows, setEditingRows] = useState({});
-  const [originalData, setOriginalData] = useState({});
-  const [newEntry, setNewEntry] = useState({
+  const [kerusakanList, setKerusakanList] = useState<Kerusakan[]>([]);
+  const [filteredKerusakan, setFilteredKerusakan] = useState<Kerusakan[]>([]);
+  const [sortOrder, setSortOrder] = useState<string>('ascending');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [editingRows, setEditingRows] = useState<{ [key: string]: boolean }>({});
+  const [originalData, setOriginalData] = useState<{ [key: string]: Kerusakan }>({});
+  const [newEntry, setNewEntry] = useState<NewEntry>({
     kode_kerusakan: '',
     kode_gejala: '',
     bobot_gejala: '',
@@ -45,69 +57,70 @@ export default function Gejala() {
     fetchData();
   }, []);
 
+  const fetchData = async () => {
+    try {
+      const response = await axios.get<Kerusakan[]>('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptomseverity');
+      setKerusakanList(response.data || []);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('Error fetching data:', error.message);
+      }
+    }
+  };
+
   useEffect(() => {
+    const filterAndSortKerusakan = () => {
+      let filtered = [...kerusakanList];
+
+      if (searchTerm) {
+        filtered = filtered.filter(kerusakan =>
+          kerusakan.kode_kerusakan.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      const sorted = [...filtered].sort((a, b) => {
+        if (a.kode_kerusakan && b.kode_kerusakan) {
+          return sortOrder === 'ascending' ? a.kode_kerusakan.localeCompare(b.kode_kerusakan) : b.kode_kerusakan.localeCompare(a.kode_kerusakan);
+        } else {
+          return 0;
+        }
+      });
+
+      setFilteredKerusakan(sorted);
+    };
+
     filterAndSortKerusakan();
   }, [kerusakanList, searchTerm, sortOrder]);
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptomseverity');
-      setKerusakanList(response.data || []);
-    } catch (error) {
-      console.error('Error fetching data:', error.message);
-    }
-  };
-
-  const filterAndSortKerusakan = () => {
-    let filtered = [...kerusakanList];
-
-    if (searchTerm) {
-      filtered = filtered.filter(Kerusakan =>
-        Kerusakan.kode_kerusakan.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    const sorted = [...filtered].sort((a, b) => {
-      if (a.kode_kerusakan && b.kode_kerusakan) {
-        return sortOrder === 'ascending' ? a.kode_kerusakan.localeCompare(b.kode_kerusakan) : b.kode_kerusakan.localeCompare(a.kode_kerusakan);
-      } else {
-        return 0;
-      }
-    });
-
-    setFilteredKerusakan(sorted);
-  };
-
-
-  const handleDeleteKerusakan = async (id) => {
+  const handleDeleteKerusakan = async (id: string) => {
     try {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptomseverity/${id}`);
       setKerusakanList(kerusakanList.filter(kerusakan => kerusakan.id !== id));
-    } catch (error) {
-      console.error('Error deleting kerusakan:', error.message);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('Error deleting kerusakan:', error.message);
+      }
     }
   };
 
-  const startEditing = (id, kerusakan) => {
+  const startEditing = (id: string, kerusakan: Kerusakan) => {
     setEditingRows(prevState => ({
       ...prevState,
       [id]: true,
     }));
 
-    // Simpan nilai asli sebelum diedit
-    setOriginalData({
-      ...originalData,
+    setOriginalData(prevState => ({
+      ...prevState,
       [id]: { ...kerusakan },
-    });
+    }));
   };
 
-  const cancelEditing = (id) => {
+  const cancelEditing = (id: string) => {
     setEditingRows(prevState => ({
       ...prevState,
       [id]: false,
     }));
 
-    // Kembalikan nilai ke nilai asli sebelum diedit
     if (originalData[id]) {
       const originalKerusakan = originalData[id];
       handleInputChange(originalKerusakan.kode_kerusakan, 'kode_kerusakan', id);
@@ -116,7 +129,7 @@ export default function Gejala() {
     }
   };
 
-  const saveEditing = async (id, updatedData) => {
+  const saveEditing = async (id: string, updatedData: Kerusakan) => {
     try {
       await axios.put(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptomseverity/${id}`, updatedData);
       setKerusakanList(kerusakanList.map(kerusakan => kerusakan.id === id ? updatedData : kerusakan));
@@ -124,17 +137,19 @@ export default function Gejala() {
         ...prevState,
         [id]: false,
       }));
-      // Hapus data asli yang disimpan setelah disimpan
-      setOriginalData(prevState => ({
-        ...prevState,
-        [id]: undefined,
-      }));
-    } catch (error) {
-      console.error('Error updating kerusakan:', error.message);
+      setOriginalData(prevState => {
+        const newState = { ...prevState };
+        delete newState[id];
+        return newState;
+      });
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('Error updating kerusakan:', error.message);
+      }
     }
   };
 
-  const handleInputChange = (value, fieldName, id) => {
+  const handleInputChange = (value: string, fieldName: keyof Kerusakan, id: string) => {
     const updatedKerusakanList = kerusakanList.map((kerusakan) => {
       if (kerusakan.id === id) {
         return {
@@ -147,7 +162,7 @@ export default function Gejala() {
     setKerusakanList(updatedKerusakanList);
   };
 
-  const handleNewInputChange = (value, fieldName) => {
+  const handleNewInputChange = (value: string, fieldName: keyof NewEntry) => {
     setNewEntry(prevState => ({
       ...prevState,
       [fieldName]: value,
@@ -156,19 +171,19 @@ export default function Gejala() {
 
   const addNewEntry = async () => {
     try {
-      const response = await axios.post('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptomseverity', newEntry);
+      await axios.post('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptomseverity', newEntry);
       await fetchData(); 
       setNewEntry({
         kode_kerusakan: '',
         kode_gejala: '',
         bobot_gejala: '',
       });
-    } catch (error) {
-      console.error('Error adding new entry:', error.message);
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        console.error('Error adding new entry:', error.message);
+      }
     }
   };
-  
-  
 
   const items = [
     { title: 'Dashboard', href: '/' },
@@ -226,13 +241,11 @@ export default function Gejala() {
           <div className='flex flex-col gap-2 lg:flex-row'>
             <Input
               placeholder='Kode Kerusakan'
-              disabled={!editingRows}
               value={newEntry.kode_kerusakan}
               onChange={(e) => handleNewInputChange(e.target.value, 'kode_kerusakan')}
             />
             <Input
               placeholder='Kode Gejala'
-              disabled={!editingRows}
               value={newEntry.kode_gejala}
               onChange={(e) => handleNewInputChange(e.target.value, 'kode_gejala')}
             />
@@ -266,10 +279,10 @@ export default function Gejala() {
             {filteredKerusakan.map((kerusakan) => (
               <TableRow key={kerusakan.id}>
                 <TableCell className='py-4 pr-6 text-sm text-gray-500 rounded-md whitespace-nowrap'>
-                    {kerusakan.kode_kerusakan}
+                  {kerusakan.kode_kerusakan}
                 </TableCell>
                 <TableCell className='px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>
-                    {kerusakan.kode_gejala}
+                  {kerusakan.kode_gejala}
                 </TableCell>
                 <TableCell className='px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>
                   {editingRows[kerusakan.id] ? (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import {
@@ -7,6 +7,7 @@ import {
   LayoutHeader,
 } from '@/components/custom/layout';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -28,40 +29,35 @@ import {
 import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
 
+interface ProbabilitasType {
+  id: number;
+  kode_kerusakan: string;
+  probabilitas: string;
+}
+
 export default function Probabilitas() {
-  const [probabilitasList, setProbabilitasList] = useState([]);
-  const [filteredProbabilitas, setFilteredProbabilitas] = useState([]);
+  const [probabilitasList, setProbabilitasList] = useState<ProbabilitasType[]>([]);
+  const [filteredProbabilitas, setFilteredProbabilitas] = useState<ProbabilitasType[]>([]);
   const [sortOrder, setSortOrder] = useState('ascending');
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingProbabilitas, setEditingProbabilitas] = useState(null);
+  const [editingProbabilitas, setEditingProbabilitas] = useState<ProbabilitasType | null>(null);
   const [newKodeKerusakan, setNewKodeKerusakan] = useState('');
   const [newProbabilitas, setNewProbabilitas] = useState('');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    filterAndSortProbabilitas();
-  }, [probabilitasList, searchTerm, sortOrder]);
-
   const fetchData = async () => {
     try {
       const response = await axios.get('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/probability');
       setProbabilitasList(response.data || []);
-      setLoading(false);
     } catch (error) {
-      console.error('Error fetching data:', error.message);
-      setLoading(false);
+      console.error('Error fetching data:', (error as Error).message);
     }
   };
 
-  useEffect(() => {
-    filterAndSortProbabilitas(); // Trigger filter and sort when editingProbabilitas changes
-  }, [editingProbabilitas]);
-
-  const filterAndSortProbabilitas = () => {
+  const filterAndSortProbabilitas = useCallback(() => {
     let filtered = [...probabilitasList];
 
     if (searchTerm) {
@@ -79,16 +75,20 @@ export default function Probabilitas() {
     });
 
     setFilteredProbabilitas(sorted);
-  };
+  }, [probabilitasList, searchTerm, sortOrder]);
 
-  const handleDeleteProbabilitas = async (id) => {
+  useEffect(() => {
+    filterAndSortProbabilitas();
+  }, [probabilitasList, searchTerm, sortOrder, filterAndSortProbabilitas]);
+
+  const handleDeleteProbabilitas = async (id: number) => {
     try {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/probability/${id}`);
       setProbabilitasList(probabilitasList.filter(probabilitas => probabilitas.id !== id));
-      filterAndSortProbabilitas(); // Update filtered list after deletion
+      filterAndSortProbabilitas();
       toast.success('Probabilitas berhasil dihapus.');
     } catch (error) {
-      console.error('Error deleting probabilitas:', error.message);
+      console.error('Error deleting probabilitas:', (error as Error).message);
       toast.error('Terjadi kesalahan saat menghapus probabilitas.');
     }
   };
@@ -104,10 +104,10 @@ export default function Probabilitas() {
       const updatedProbabilitasList = probabilitasList.map(probabilitas => (probabilitas.id === response.data.id ? response.data : probabilitas));
       setProbabilitasList(updatedProbabilitasList);
       setEditingProbabilitas(null);
-      fetchData(); // Fetch updated data after edit
+      fetchData();
       toast.success('Probabilitas berhasil diubah.');
     } catch (error) {
-      console.error('Error editing probabilitas:', error.message);
+      console.error('Error editing probabilitas:', (error as Error).message);
       toast.error('Terjadi kesalahan saat mengubah probabilitas.');
     }
   };
@@ -121,16 +121,16 @@ export default function Probabilitas() {
       const updatedProbabilitasList = [...probabilitasList, response.data];
       setProbabilitasList(updatedProbabilitasList);
       setNewProbabilitas('');
-      setNewKodeKerusakan(''); // Reset kode kerusakan setelah tambah
-      fetchData(); // Fetch updated data after add
+      setNewKodeKerusakan('');
+      fetchData();
       toast.success('Probabilitas berhasil ditambahkan.');
     } catch (error) {
-      console.error('Error adding probabilitas:', error.message);
+      console.error('Error adding probabilitas:', (error as Error).message);
       toast.error('Terjadi kesalahan saat menambah probabilitas.');
     }
   };
 
-  const openEditForm = (probabilitas) => {
+  const openEditForm = (probabilitas: ProbabilitasType) => {
     setEditingProbabilitas(probabilitas);
   };
 
@@ -138,11 +138,11 @@ export default function Probabilitas() {
     setEditingProbabilitas(null);
   };
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleSortChange = (value) => {
+  const handleSortChange = (value: string) => {
     setSortOrder(value);
   };
 
@@ -238,7 +238,7 @@ export default function Probabilitas() {
                 onEdit={openEditForm}
                 onDelete={handleDeleteProbabilitas}
                 onSave={handleEditProbabilitas}
-                onCancel={closeEditForm} 
+                onCancel={closeEditForm}
               />
             ))}
           </TableBody>
@@ -248,7 +248,16 @@ export default function Probabilitas() {
   );
 }
 
-function ProbabilitasRow({ probabilitas, editingProbabilitas, onEdit, onDelete, onSave, onCancel }) {
+interface ProbabilitasRowProps {
+  probabilitas: ProbabilitasType;
+  editingProbabilitas: ProbabilitasType | null;
+  onEdit: (probabilitas: ProbabilitasType) => void;
+  onDelete: (id: number) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+function ProbabilitasRow({ probabilitas, editingProbabilitas, onEdit, onDelete, onSave, onCancel }: ProbabilitasRowProps) {
   const isEditing = editingProbabilitas && editingProbabilitas.id === probabilitas.id;
 
   const handleEdit = () => {

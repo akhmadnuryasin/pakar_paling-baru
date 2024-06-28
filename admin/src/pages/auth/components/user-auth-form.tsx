@@ -23,6 +23,14 @@ import { Button } from '@/components/custom/button';
 import { PasswordInput } from '@/components/custom/password-input';
 import { cn } from '@/lib/utils';
 
+interface User {
+  id: string;
+  username: string;
+  kata_sandi: string;
+  name: string; // Example property
+  email: string; // Example property
+}
+
 interface UserAuthFormProps {
   className?: string;
 }
@@ -65,10 +73,12 @@ export function UserAuthForm({ className }: UserAuthFormProps) {
 
     try {
       if (username === myUsername && kata_sandi === myPassword) {
-        const user = { 
-          id: '1', // ID pengguna harus berupa string
+        const user: User = { 
+          id: '1',
           username, 
-          kata_sandi 
+          kata_sandi,
+          name: 'John Doe', // Example value
+          email: 'john.doe@example.com', // Example value
         };
         // Save user data to localStorage
         localStorage.setItem('user', JSON.stringify(user));

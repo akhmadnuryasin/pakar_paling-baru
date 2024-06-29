@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
 import {
   Layout,
   LayoutBody,
   LayoutHeader,
 } from '@/components/custom/layout';
-import { useAuth } from '../../auth-context';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -16,8 +17,6 @@ import {
 import { Separator } from '@/components/ui/separator';
 import ThemeSwitch from '@/components/theme-switch';
 import { Breadcrumb, BreadcrumbItem } from '@/components/custom/breadcrumb';
-import { Link } from 'react-router-dom';
-import supabase from '@/supabaseClient';
 import {
   Table,
   TableHeader,
@@ -27,126 +26,149 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { IconChecks, IconEdit, IconTrash, IconX } from '@tabler/icons-react';
+import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { useToast } from "@/components/ui/use-toast"
 
-export default function Pengguna() {
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [filteredAnnouncements, setFilteredAnnouncements] = useState<any[]>([]);
-  const [sortOrder, setSortOrder] = useState<'ascending' | 'descending'>('ascending');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const { user } = useAuth();
-  const [newAnnouncement, setNewAnnouncement] = useState({ judul: '', isi: '' });
-  const [editingAnnouncement, setEditingAnnouncement] = useState<any>(null);
+interface UserType {
+  id: number;
+  username: string;
+  password: string;
+}
+
+export default function UserManagement() {
+  const [userList, setUserList] = useState<UserType[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserType[]>([]);
+  const [sortOrder, setSortOrder] = useState('ascending');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingUser, setEditingUser] = useState<UserType | null>(null);
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
+  const { toast } = useToast()
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!user) {
-          throw new Error('User is not authenticated.');
-        }
-
-        const { data, error } = await supabase
-          .from('pengumuman')
-          .select('*');
-
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        setAnnouncements(data || []);
-      } catch (error: any) {
-        console.error('Error fetching data:', error.message);
-      }
-    };
-
     fetchData();
-  }, [user, newAnnouncement, editingAnnouncement]);
+  }, []);
 
-  useEffect(() => {
-    filterAndSortAnnouncements();
-  }, [announcements, searchTerm, sortOrder]);
+  const fetchData = async () => {
+    try {
+      const response = await axios.get('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/users');
+      setUserList(response.data || []);
+    } catch (error) {
+      console.error('Error fetching data:', (error as Error).message);
+    }
+  };
 
-  const filterAndSortAnnouncements = () => {
-    let filtered = announcements;
+  const filterAndSortUsers = useCallback(() => {
+    let filtered = [...userList];
 
     if (searchTerm) {
-      filtered = filtered.filter(announcement =>
-        announcement.judul.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(user =>
+        user.username.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     const sorted = [...filtered].sort((a, b) => {
-      if (sortOrder === 'ascending') {
-        return a.judul.localeCompare(b.judul);
+      if (a.username && b.username) {
+        return sortOrder === 'ascending' ? a.username.localeCompare(b.username) : b.username.localeCompare(a.username);
       } else {
-        return b.judul.localeCompare(a.judul);
+        return 0;
       }
     });
 
-    setFilteredAnnouncements(sorted);
-  };
+    setFilteredUsers(sorted);
+  }, [userList, searchTerm, sortOrder]);
 
-  const handleAddAnnouncement = async () => {
+  useEffect(() => {
+    filterAndSortUsers();
+  }, [userList, searchTerm, sortOrder, filterAndSortUsers]);
+
+  const handleDeleteUser = async (id: number) => {
     try {
-      const { data, error } = await supabase
-        .from('pengumuman')
-        .insert([newAnnouncement]);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data) {
-        setAnnouncements([...announcements, ...data]);
-      }
-
-      setNewAnnouncement({ judul: '', isi: '' });
-    } catch (error: any) {
-      console.error('Error adding announcement:', error.message);
+      await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/users/${id}`);
+      setUserList(userList.filter(user => user.id !== id));
+      filterAndSortUsers();
+      toast({
+        title: "Sukses",
+        description: "User berhasil dihapus",
+      })
+    } catch (error) {
+      console.error('Error deleting user:', (error as Error).message);
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menghapus user.",
+      })
     }
   };
 
-  const handleEditAnnouncement = async (id: string) => {
+  const handleEditUser = async () => {
+    if (!editingUser) return;
+
     try {
-      const { data, error } = await supabase
-        .from('pengumuman')
-        .update(editingAnnouncement)
-        .eq('id', id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data) {
-        setAnnouncements(announcements.map(announcement => (announcement.id === id ? data[0] : announcement)));
-      }
-
-      setEditingAnnouncement(null);
-    } catch (error: any) {
-      console.error('Error editing announcement:', error.message);
+      const response = await axios.put(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/users/${editingUser.id}`, {
+        username: editingUser.username,
+        password: editingUser.password,
+      });
+      const updatedUserList = userList.map(user => (user.id === response.data.id ? response.data : user));
+      setUserList(updatedUserList);
+      setEditingUser(null);
+      fetchData();
+      toast({
+        title: "Sukses",
+        description: "User berhasil diubah",
+      })
+    } catch (error) {
+      console.error('Error editing user:', (error as Error).message);
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat mengubah user.",
+      })
     }
   };
 
-  const handleDeleteAnnouncement = async (id: string) => {
+  const handleAddUser = async () => {
     try {
-      const { error } = await supabase
-        .from('pengumuman')
-        .delete()
-        .eq('id', id);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setAnnouncements(announcements.filter(announcement => announcement.id !== id));
-    } catch (error: any) {
-      console.error('Error deleting announcement:', error.message);
+      const response = await axios.post('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/users', {
+        username: newUsername,
+        password: newPassword,
+      });
+      const updatedUserList = [...userList, response.data];
+      setUserList(updatedUserList);
+      setNewPassword('');
+      setNewUsername('');
+      fetchData();
+      toast({
+        title: "Sukses",
+        description: "User berhasil ditambahkan",
+      })
+    } catch (error) {
+      console.error('Error adding user:', (error as Error).message);
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menambah user.",
+      })
     }
+  };
+
+  const openEditForm = (user: UserType) => {
+    setEditingUser(user);
+  };
+
+  const closeEditForm = () => {
+    setEditingUser(null);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSortChange = (value: string) => {
+    setSortOrder(value);
   };
 
   const items = [
     { title: 'Dashboard', href: '/' },
-    { title: 'Pengumuman' },
+    { title: 'User Management' },
   ].map(({ href, title }) => (
     <BreadcrumbItem key={title}>
       {href ? (
@@ -164,17 +186,13 @@ export default function Pengguna() {
 
   return (
     <Layout fadedBelow fixedHeight>
-      {/* Top Heading */}
       <LayoutHeader>
         <div className='flex items-center justify-between w-full pl-2 space-x-4 lg:p-b- lg:ml-auto'>
-          <Breadcrumb>
-            {items}
-          </Breadcrumb>
+          <Breadcrumb>{items}</Breadcrumb>
           <ThemeSwitch />
         </div>
       </LayoutHeader>
 
-      {/* Content */}
       <LayoutBody className='flex flex-col pt-0' fixedHeight>
         <div className='flex items-end justify-between gap-4 my-4 sm:my-0 sm:items-center'>
           <div className='flex flex-col gap-4 grow sm:my-4 sm:flex-row'>
@@ -182,51 +200,49 @@ export default function Pengguna() {
               placeholder='Search...'
               className='w-full h-9'
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
             />
           </div>
 
-          <Select value={sortOrder} onValueChange={value => setSortOrder(value as 'ascending' | 'descending')}>
+          <Select
+            value={sortOrder}
+            onValueChange={handleSortChange}
+          >
             <SelectTrigger className='w-16'>
               <SelectValue>Sort</SelectValue>
             </SelectTrigger>
             <SelectContent align='end'>
-              <SelectItem value='ascending'>
-                Ascending
-              </SelectItem>
-              <SelectItem value='descending'>
-                Descending
-              </SelectItem>
+              <SelectItem value='ascending'>Ascending</SelectItem>
+              <SelectItem value='descending'>Descending</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <Separator className='shadow' />
-        {/* Add New Announcement Form */}
         <div className='my-4'>
-          <h2 className='mb-4 text-lg font-medium'>Tambah Pengumuman</h2>
+          <h2 className='px-2 mb-4 font-medium text-muted-foreground'>Tambah Admin</h2>
           <div className='flex flex-col gap-2 lg:flex-row'>
             <Input
-              placeholder='Judul'
-              value={newAnnouncement.judul}
-              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, judul: e.target.value })}
+              placeholder='Username'
+              value={newUsername}
+              onChange={(e) => setNewUsername(e.target.value)}
             />
             <Input
-              placeholder='Deskripsi'
-              value={newAnnouncement.isi}
-              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, isi: e.target.value })}
+              placeholder='Password'
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
             />
-            <Button onClick={handleAddAnnouncement}>Tambah</Button>
+            <Button onClick={handleAddUser}>Tambah</Button>
           </div>
         </div>
-        {/* Announcement Table */}
+
         <Table className='min-w-full bg-transparent rounded-md'>
           <TableHeader>
             <TableRow>
               <TableHead className='py-3 pr-6 text-xs font-medium tracking-wider text-left text-gray-500 uppercase rounded-md'>
-                Judul
+                Username
               </TableHead>
               <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase rounded-md'>
-                Deskripsi
+                Password
               </TableHead>
               <TableHead className='py-3 pr-12 text-xs font-medium tracking-wider text-right text-gray-500 uppercase rounded-md'>
                 Actions
@@ -234,60 +250,90 @@ export default function Pengguna() {
             </TableRow>
           </TableHeader>
           <TableBody className='bg-transparent divide-y'>
-            {filteredAnnouncements.map((announcement) => (
-              <TableRow key={announcement.id}>
-                <TableCell className='py-4 pr-6 text-sm text-gray-500 rounded-md whitespace-nowrap'>
-                  {editingAnnouncement?.id === announcement.id ? (
-                    <Input
-                      value={editingAnnouncement.judul}
-                      onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, judul: e.target.value })}
-                    />
-                  ) : (
-                    announcement.judul
-                  )}
-                </TableCell>
-                <TableCell className='px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>
-                  {editingAnnouncement?.id === announcement.id ? (
-                    <Input
-                      value={editingAnnouncement.isi}
-                      onChange={(e) => setEditingAnnouncement({ ...editingAnnouncement, isi: e.target.value })}
-                    />
-                  ) : (
-                    announcement.isi
-                  )}
-                </TableCell>
-                <TableCell className='flex justify-end px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>
-                  {editingAnnouncement?.id === announcement.id ? (
-                    <>
-                      <Button variant='ghost' onClick={() => handleEditAnnouncement(announcement.id)}>
-                        <IconChecks className='w-5 h-5' />
-                      </Button>
-                      <Button variant='ghost' onClick={() => setEditingAnnouncement(null)}>
-                        <IconX className='w-5 h-5' />
-                      </Button>
-                    </>
-                  ) : (
-                    <div className='flex space-x-2'>
-                      <Button
-                        variant='ghost'
-                        onClick={() => setEditingAnnouncement(announcement)}
-                      >
-                        <IconEdit className='w-4 h-4' />
-                      </Button>
-                      <Button
-                        variant='ghost'
-                        onClick={() => handleDeleteAnnouncement(announcement.id)}
-                      >
-                        <IconTrash className='w-4 h-4' />
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
+            {filteredUsers.map(user => (
+              <UserRow
+                key={user.id}
+                user={user}
+                editingUser={editingUser}
+                onEdit={openEditForm}
+                onDelete={handleDeleteUser}
+                onSave={handleEditUser}
+                onCancel={closeEditForm}
+              />
             ))}
           </TableBody>
         </Table>
       </LayoutBody>
     </Layout>
+  );
+}
+
+interface UserRowProps {
+  user: UserType;
+  editingUser: UserType | null;
+  onEdit: (user: UserType) => void;
+  onDelete: (id: number) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+function UserRow({ user, editingUser, onEdit, onDelete, onSave, onCancel }: UserRowProps) {
+  const isEditing = editingUser && editingUser.id === user.id;
+
+  const handleEdit = () => {
+    onEdit(user);
+  };
+
+  const handleSave = () => {
+    onSave();
+  };
+
+  const handleCancel = () => {
+    onCancel();
+  };
+
+  const handleDelete = () => {
+    onDelete(user.id);
+  };
+
+  return (
+    <TableRow>
+      <TableCell className='py-4 pr-6 text-sm text-gray-500 rounded-md whitespace-nowrap'>
+        {user.username}
+      </TableCell>
+      <TableCell className='px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>
+        {isEditing ? (
+          <Input
+            type='password'
+            value={editingUser.password}
+            onChange={(e) => onEdit({ ...editingUser, password: e.target.value })}
+            maxLength={8}
+          />
+        ) : (
+          '********'
+        )}
+      </TableCell>
+      <TableCell className='flex justify-end px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>
+        {isEditing ? (
+          <>
+            <Button variant='ghost' onClick={handleSave}>
+              Save
+            </Button>
+            <Button variant='ghost' onClick={handleCancel}>
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button variant='ghost' onClick={handleEdit}>
+              <IconEdit className='w-4 h-4' />
+            </Button>
+            <Button variant='ghost' onClick={handleDelete}>
+              <IconTrash className='w-4 h-4' />
+            </Button>
+          </>
+        )}
+      </TableCell>
+    </TableRow>
   );
 }

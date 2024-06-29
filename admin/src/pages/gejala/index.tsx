@@ -93,7 +93,7 @@ export default function Gejala() {
         description: "Gejala berhasil dihapus",
       })
     } catch (error) {
-      console.error('Error deleting gejala:', (error as Error).message);
+      // console.error('Error deleting gejala:', (error as Error).message);
       toast({
         title: "Gagal",
         description: "Terjadi kesalahan saat menghapus gejala.",
@@ -115,7 +115,7 @@ export default function Gejala() {
         description: "Gejala berhasil diubah",
       })
     } catch (error) {
-      console.error('Error editing gejala:', (error as Error).message);
+      // console.error('Error editing gejala:', (error as Error).message);
       toast({
         title: "Gagal",
         description: "Terjadi kesalahan saat mengubah gejala.",
@@ -137,7 +137,7 @@ export default function Gejala() {
         description: "Gejala berhasil ditambahkan.",
       })
     } catch (error) {
-      console.error('Error adding gejala:', (error as Error).message);
+      // console.error('Error adding gejala:', (error as Error).message);
       toast({
         title: "Gagal",
         description: "Terjadi kesalahan saat menambah gejala.",

@@ -22,13 +22,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/custom/button';
 import { PasswordInput } from '@/components/custom/password-input';
 import { cn } from '@/lib/utils';
+import axios from 'axios';
 
 interface User {
   id: string;
   username: string;
-  kata_sandi: string;
-  name: string; 
-  email: string; 
+  password: string;
 }
 
 interface UserAuthFormProps {
@@ -40,7 +39,7 @@ const formSchema = z.object({
     .string()
     .min(1, { message: 'Please enter your username' })
     .nonempty({ message: 'Invalid username address' }), 
-  kata_sandi: z
+  password: z
     .string()
     .min(7, {
       message: 'Password must be at least 7 characters long',
@@ -52,35 +51,36 @@ export function UserAuthForm({ className }: UserAuthFormProps) {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: '',
-      kata_sandi: '',
+      password: '',
     },
   });
-
-  const myUsername = 'admin'; 
-  const myPassword = 'admin123'; 
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setUsernameError(null);
     setPasswordError(null);
-
-    const { username, kata_sandi } = data;
-
+  
+    const { username, password } = data;
+  
     try {
-      if (username === myUsername && kata_sandi === myPassword) {
-        const user: User = { 
-          id: '1',
-          username, 
-          kata_sandi,
-          name: 'John Doe', // Example value
-          email: 'john.doe@example.com', // Example value
+      const response = await axios.post('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/login', { username, password });
+      
+      // console.log('API response:', response); // Log the response for debugging
+  
+      if (response.status === 200) {
+        const { id, username: responseUsername } = response.data;
+        // console.log('Parsed user data:', { id, username: responseUsername });
+        const user: User = {
+          id,
+          username: responseUsername,
+          password,
         };
-        // Save user data to localStorage
+  
         localStorage.setItem('user', JSON.stringify(user));
         login(user);
         navigate('/');
@@ -88,16 +88,16 @@ export function UserAuthForm({ className }: UserAuthFormProps) {
         setUsernameError('Invalid username or password');
       }
     } catch (error) {
-      console.error('Login failed', error);
+      // console.error('Login failed', error);
       setUsernameError('Invalid username or password');
     } finally {
       setIsLoading(false);
     }
   }
 
-  if (user) {
-    console.log('User logged in:', user);
-  }
+  // if (user) {
+  //   console.log('User logged in:', user);
+  // }
 
   return (
     <div className={cn('grid gap-6', className)}>
@@ -135,7 +135,7 @@ export function UserAuthForm({ className }: UserAuthFormProps) {
             )}
             <FormField
               control={form.control}
-              name="kata_sandi"
+              name="password"
               render={({ field }) => (
                 <FormItem className="space-y-1">
                   <div className="flex items-center justify-between">

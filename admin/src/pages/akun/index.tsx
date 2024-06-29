@@ -7,17 +7,20 @@ import { useAuth } from '../../auth-context';
 import { IconLogout2 } from '@tabler/icons-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Akun = () => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
   const handleLogout = () => {
     // Clear user key from localStorage
     localStorage.removeItem('user');
+    // Call the logout function from the context
+    logout();
     // Redirect to /sign-in
     navigate('/sign-in');
   };
-  const { user } = useAuth();
 
   const items = [
     { title: 'Dashboard', href: '/' },
@@ -55,10 +58,7 @@ const Akun = () => {
             <div className="mt-auto">
               <Card x-chunk="dashboard-02-chunk-0">
                 <CardHeader className="p-2 pt-0 md:p-4">
-                  <CardTitle className='pt-2'>Email</CardTitle>
-                  <CardDescription>
-                    {user ? user.email : 'Loading...'}
-                  </CardDescription>
+                  <CardTitle className='px-2 mb-4 font-medium text-muted-foreground'>Login sebagai : {user ? user.username : 'Loading...'}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
                   <Button onClick={handleLogout} size="sm" className="w-full space-x-2">

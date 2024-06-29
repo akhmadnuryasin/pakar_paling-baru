@@ -2,6 +2,7 @@ import {
   IconLayoutDashboard,
   IconVirusSearch,
   // IconSpeakerphone,
+  IconUsersGroup,
   IconScale,
   IconAbacus,
   IconUserCircle,
@@ -63,6 +64,12 @@ export const sidelinks: SideLink[] = [
     label: '',
     href: '/rules',
     icon: <IconRulerMeasure size={18} />,
+  },
+  {
+    title: 'Admin',
+    label: '',
+    href: '/pengguna',
+    icon: <IconUsersGroup size={18} />,
   },
   {
     title: 'Account',

@@ -25,7 +25,9 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
-import { Separator } from '@radix-ui/react-dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import ThemeSwitch from '@/components/theme-switch';
+import { useToast } from "@/components/ui/use-toast"
 
 interface Kerusakan {
   id: string;
@@ -52,6 +54,8 @@ export default function Gejala() {
     kode_gejala: '',
     bobot_gejala: '',
   });
+
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchData();
@@ -96,9 +100,17 @@ export default function Gejala() {
     try {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptomseverity/${id}`);
       setKerusakanList(kerusakanList.filter(kerusakan => kerusakan.id !== id));
+      toast({
+        title: "Sukses",
+        description: "Bobot gejala berhasil dihapus.",
+      })
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        console.error('Error deleting kerusakan:', error.message);
+        toast({
+          title: "Gagal",
+          description: "Terjadi kesalahan saat menghapus bobot gejala.",
+        })
+        // console.error('Error deleting kerusakan:', error.message);
       }
     }
   };
@@ -142,9 +154,17 @@ export default function Gejala() {
         delete newState[id];
         return newState;
       });
+      toast({
+        title: "Sukses",
+        description: "Bobot gejala berhasil diubah",
+      })
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        console.error('Error updating kerusakan:', error.message);
+        // console.error('Error updating kerusakan:', error.message);
+        toast({
+          title: "Gagal",
+          description: "Terjadi kesalahan saat mengubah bobot gejala.",
+        })
       }
     }
   };
@@ -178,16 +198,24 @@ export default function Gejala() {
         kode_gejala: '',
         bobot_gejala: '',
       });
+      toast({
+        title: "Sukses",
+        description: "Bobot gejala berhasil ditambahkan",
+      })
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
-        console.error('Error adding new entry:', error.message);
+        toast({
+          title: "Gagal",
+          description: "Terjadi kesalahan saat menambahkan bobot gejala.",
+        })
+        // console.error('Error adding new entry:', error.message);
       }
     }
   };
 
   const items = [
     { title: 'Dashboard', href: '/' },
-    { title: 'Kerusakan Kendaraan' },
+    { title: 'Bobot Gejala' },
   ].map(({ href, title }) => (
     <BreadcrumbItem key={title}>
       {href ? (
@@ -208,6 +236,7 @@ export default function Gejala() {
       <LayoutHeader>
         <div className='flex items-center justify-between w-full pl-2 space-x-4 lg:p-b- lg:ml-auto'>
           <Breadcrumb>{items}</Breadcrumb>
+          <ThemeSwitch />
         </div>
       </LayoutHeader>
 
@@ -237,7 +266,7 @@ export default function Gejala() {
         </div>
         <Separator className='shadow' />
         <div className='my-4'>
-          <h2 className='mb-4 text-lg font-medium'>Tambah Bobot Gejala</h2>
+          <h2 className='px-2 mb-4 font-medium text-muted-foreground'>Tambah Bobot Gejala</h2>
           <div className='flex flex-col gap-2 lg:flex-row'>
             <Input
               placeholder='Kode Kerusakan'
@@ -257,7 +286,7 @@ export default function Gejala() {
             <Button onClick={addNewEntry}>Tambah</Button>
           </div>
         </div>
-
+        <Separator className='shadow' />
         <Table className='min-w-full bg-transparent rounded-md'>
           <TableHeader>
             <TableRow>

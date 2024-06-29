@@ -1,5 +1,5 @@
 import {
-  // IconLayoutDashboard,
+  IconLayoutDashboard,
   IconVirusSearch,
   // IconSpeakerphone,
   IconScale,
@@ -22,12 +22,12 @@ export interface SideLink extends NavLink {
 }
 
 export const sidelinks: SideLink[] = [
-  // {
-  //   title: 'Dashboard',
-  //   label: '',
-  //   href: '/',
-  //   icon: <IconLayoutDashboard size={18} />,
-  // },
+  {
+    title: 'Dashboard',
+    label: '',
+    href: '/',
+    icon: <IconLayoutDashboard size={18} />,
+  },
   // {
   //   title: 'Pengguna',
   //   label: '',

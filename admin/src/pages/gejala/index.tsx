@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
-import { toast } from 'sonner';
+import { useToast } from "@/components/ui/use-toast"
+ 
 
 interface GejalaType {
   id: number;
@@ -42,6 +43,8 @@ export default function Gejala() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingGejala, setEditingGejala] = useState<GejalaType | null>(null);
   const [newGejala, setNewGejala] = useState('');
+
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchData();
@@ -85,10 +88,16 @@ export default function Gejala() {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/symptom/${id}`);
       setGejalaList(gejalaList.filter(gejala => gejala.id !== id));
       filterAndSortGejala();
-      toast('Gejala berhasil dihapus.');
+      toast({
+        title: "Sukses",
+        description: "Gejala berhasil dihapus",
+      })
     } catch (error) {
       console.error('Error deleting gejala:', (error as Error).message);
-      toast('Terjadi kesalahan saat menghapus gejala.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menghapus gejala.",
+      })
     }
   };
 
@@ -101,10 +110,16 @@ export default function Gejala() {
       setGejalaList(updatedGejalaList);
       setEditingGejala(null);
       fetchData();
-      toast('Gejala berhasil diubah.');
+      toast({
+        title: "Sukses",
+        description: "Gejala berhasil diubah",
+      })
     } catch (error) {
       console.error('Error editing gejala:', (error as Error).message);
-      toast('Terjadi kesalahan saat mengubah gejala.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat mengubah gejala.",
+      })
     }
   };
 
@@ -117,10 +132,16 @@ export default function Gejala() {
       setGejalaList(updatedGejalaList);
       setNewGejala('');
       fetchData();
-      toast('Gejala berhasil ditambahkan.');
+      toast({
+        title: "Sukses",
+        description: "Gejala berhasil ditambahkan.",
+      })
     } catch (error) {
       console.error('Error adding gejala:', (error as Error).message);
-      toast('Terjadi kesalahan saat menambah gejala.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menambah gejala.",
+      })
     }
   };
 
@@ -142,7 +163,7 @@ export default function Gejala() {
 
   const items = [
     { title: 'Dashboard', href: '/' },
-    { title: 'Gejala Kendaraan' },
+    { title: 'Gejala' },
   ].map(({ href, title }) => (
     <BreadcrumbItem key={title}>
       {href ? (
@@ -193,7 +214,7 @@ export default function Gejala() {
         </div>
         <Separator className='shadow' />
         <div className='my-4'>
-          <h2 className='mb-4 text-lg font-medium'>Tambah Gejala</h2>
+          <h2 className='px-2 mb-4 font-medium text-muted-foreground'>Tambah Gejala</h2>
           <div className='flex flex-col gap-2 lg:flex-row'>
             <Input
               placeholder='Gejala'

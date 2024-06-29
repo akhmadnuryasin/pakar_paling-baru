@@ -27,8 +27,8 @@ interface User {
   id: string;
   username: string;
   kata_sandi: string;
-  name: string; // Example property
-  email: string; // Example property
+  name: string; 
+  email: string; 
 }
 
 interface UserAuthFormProps {

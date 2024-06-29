@@ -25,7 +25,9 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
-import { Separator } from '@radix-ui/react-dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import ThemeSwitch from '@/components/theme-switch';
+import { useToast } from "@/components/ui/use-toast"
 
 interface Rule {
   id: number;
@@ -41,6 +43,8 @@ export default function Rule() {
   const [editingRuleId, setEditingRuleId] = useState<number | null>(null);
   const [ruleKondisi, setRuleKondisi] = useState<string>('');
   const [hasil, setHasil] = useState<string>('');
+
+  const { toast } = useToast()
 
   const fetchData = async () => {
     try {
@@ -80,8 +84,16 @@ export default function Rule() {
     try {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/rule/${id}`);
       setRuleList(ruleList.filter(rule => rule.id !== id));
+      toast({
+        title: "Sukses",
+        description: "Rule berhasil dihapus.",
+      })
     } catch (error) {
-      console.error('Error deleting rule:', (error as Error).message);
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menghapus rule.",
+      })
+      // console.error('Error deleting rule:', (error as Error).message);
     }
   };
 
@@ -103,8 +115,16 @@ export default function Rule() {
       setRuleKondisi('');
       setHasil('');
       fetchData(); 
+      toast({
+        title: "Sukses",
+        description: "Rule berhasil ditambah.",
+      })
     } catch (error) {
-      console.error('Error adding rule:', (error as Error).message);
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menambah rule.",
+      })
+      // console.error('Error adding rule:', (error as Error).message);
     }
   };
 
@@ -125,8 +145,16 @@ export default function Rule() {
       setRuleKondisi('');
       setHasil('');
       fetchData(); 
+      toast({
+        title: "Sukses",
+        description: "Rule berhasil diedit.",
+      })
     } catch (error) {
-      console.error('Error editing rule:', (error as Error).message);
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat mengedit rule.",
+      })
+      // console.error('Error editing rule:', (error as Error).message);
     }
   };
 
@@ -169,6 +197,7 @@ export default function Rule() {
       <LayoutHeader>
         <div className='flex items-center justify-between w-full pl-2 space-x-4 lg:p-b- lg:ml-auto'>
           <Breadcrumb>{items}</Breadcrumb>
+          <ThemeSwitch />
         </div>
       </LayoutHeader>
 
@@ -198,7 +227,7 @@ export default function Rule() {
         </div>
         <Separator className='shadow' />
         <div className='my-4'>
-          <h2 className='mb-4 text-lg font-medium'>Tambah Bobot Gejala</h2>
+          <h2 className='px-2 mb-4 font-medium text-muted-foreground'>Tambah Rule</h2>
           <div className='flex flex-col gap-2 lg:flex-row'>
             <Input
               placeholder='Rule Kondisi'

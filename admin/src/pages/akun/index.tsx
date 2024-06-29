@@ -41,7 +41,7 @@ const Akun = () => {
     <Layout>
       {/* Top Heading */}
       <LayoutHeader>
-        <div className='flex items-center justify-between w-full pl-2 space-x-4 lg:px-4 lg:ml-auto'>
+        <div className='flex items-center justify-between w-full pl-2 space-x-4 lg:p-b- lg:ml-auto'>
           <Breadcrumb>{items}</Breadcrumb>
           <ThemeSwitch />
         </div>

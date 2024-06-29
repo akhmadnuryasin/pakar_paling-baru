@@ -7,7 +7,6 @@ import {
   LayoutHeader,
 } from '@/components/custom/layout';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -28,6 +27,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { useToast } from "@/components/ui/use-toast"
+
 
 interface ProbabilitasType {
   id: number;
@@ -43,6 +44,8 @@ export default function Probabilitas() {
   const [editingProbabilitas, setEditingProbabilitas] = useState<ProbabilitasType | null>(null);
   const [newKodeKerusakan, setNewKodeKerusakan] = useState('');
   const [newProbabilitas, setNewProbabilitas] = useState('');
+
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchData();
@@ -86,10 +89,16 @@ export default function Probabilitas() {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/probability/${id}`);
       setProbabilitasList(probabilitasList.filter(probabilitas => probabilitas.id !== id));
       filterAndSortProbabilitas();
-      toast.success('Probabilitas berhasil dihapus.');
+      toast({
+        title: "Sukses",
+        description: "Probabilitas berhasil dihapus",
+      })
     } catch (error) {
       console.error('Error deleting probabilitas:', (error as Error).message);
-      toast.error('Terjadi kesalahan saat menghapus probabilitas.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menghapus probabilitas.",
+      })
     }
   };
 
@@ -105,10 +114,16 @@ export default function Probabilitas() {
       setProbabilitasList(updatedProbabilitasList);
       setEditingProbabilitas(null);
       fetchData();
-      toast.success('Probabilitas berhasil diubah.');
+      toast({
+        title: "Sukses",
+        description: "Probabilitas berhasil diubah",
+      })
     } catch (error) {
       console.error('Error editing probabilitas:', (error as Error).message);
-      toast.error('Terjadi kesalahan saat mengubah probabilitas.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat mengubah probabilitas.",
+      })
     }
   };
 
@@ -123,10 +138,16 @@ export default function Probabilitas() {
       setNewProbabilitas('');
       setNewKodeKerusakan('');
       fetchData();
-      toast.success('Probabilitas berhasil ditambahkan.');
+      toast({
+        title: "Sukses",
+        description: "Probabilitas berhasil ditambahkan",
+      })
     } catch (error) {
       console.error('Error adding probabilitas:', (error as Error).message);
-      toast.error('Terjadi kesalahan saat menambah probabilitas.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menambah probabilitas.",
+      })
     }
   };
 
@@ -148,7 +169,7 @@ export default function Probabilitas() {
 
   const items = [
     { title: 'Dashboard', href: '/' },
-    { title: 'Probabilitas Kendaraan' },
+    { title: 'Probabilitas' },
   ].map(({ href, title }) => (
     <BreadcrumbItem key={title}>
       {href ? (
@@ -199,7 +220,7 @@ export default function Probabilitas() {
         </div>
         <Separator className='shadow' />
         <div className='my-4'>
-          <h2 className='mb-4 text-lg font-medium'>Tambah Probabilitas</h2>
+          <h2 className='px-2 mb-4 font-medium text-muted-foreground'>Tambah Probabilitas</h2>
           <div className='flex flex-col gap-2 lg:flex-row'>
             <Input
               placeholder='Kode Kerusakan'

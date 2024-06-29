@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { IconEdit, IconTrash } from '@tabler/icons-react';
-import { toast } from 'sonner';
+import { useToast } from "@/components/ui/use-toast"
+
 
 interface KerusakanType {
   id: number;
@@ -42,6 +43,8 @@ export default function Kerusakan() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingKerusakan, setEditingKerusakan] = useState<KerusakanType | null>(null);
   const [newKerusakan, setNewKerusakan] = useState('');
+
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchData();
@@ -85,10 +88,16 @@ export default function Kerusakan() {
       await axios.delete(`https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/damage/${id}`);
       setKerusakanList(kerusakanList.filter(kerusakan => kerusakan.id !== id));
       filterAndSortKerusakan();
-      toast('Kerusakan berhasil dihapus.');
+      toast({
+        title: "Sukses",
+        description: "Kerusakan berhasil dihapus",
+      })
     } catch (error) {
       console.error('Error deleting kerusakan:', (error as Error).message);
-      toast('Terjadi kesalahan saat menghapus kerusakan.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menghapus kerusakan.",
+      })
     }
   };
 
@@ -101,10 +110,16 @@ export default function Kerusakan() {
       setKerusakanList(updatedKerusakanList);
       setEditingKerusakan(null);
       fetchData();
-      toast('Kerusakan berhasil diubah.');
+      toast({
+        title: "Sukses",
+        description: "Kerusakan berhasil diubah.",
+      })
     } catch (error) {
       console.error('Error editing kerusakan:', (error as Error).message);
-      toast('Terjadi kesalahan saat mengubah kerusakan.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat mengubah kerusakan.",
+      })
     }
   };
 
@@ -117,10 +132,16 @@ export default function Kerusakan() {
       setKerusakanList(updatedKerusakanList);
       setNewKerusakan('');
       fetchData();
-      toast('Kerusakan berhasil ditambahkan.');
+      toast({
+        title: "Sukses",
+        description: "Kerusakan berhasil ditambahkan.",
+      })
     } catch (error) {
       console.error('Error adding kerusakan:', (error as Error).message);
-      toast('Terjadi kesalahan saat menambah kerusakan.');
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menambah kerusakan.",
+      })
     }
   };
 
@@ -142,7 +163,7 @@ export default function Kerusakan() {
 
   const items = [
     { title: 'Dashboard', href: '/' },
-    { title: 'Kerusakan Kendaraan' },
+    { title: 'Kerusakan' },
   ].map(({ href, title }) => (
     <BreadcrumbItem key={title}>
       {href ? (
@@ -193,7 +214,7 @@ export default function Kerusakan() {
         </div>
         <Separator className='shadow' />
         <div className='my-4'>
-          <h2 className='mb-4 text-lg font-medium'>Tambah Kerusakan</h2>
+          <h2 className='px-2 mb-4 font-medium text-muted-foreground'>Tambah Kerusakan</h2>
           <div className='flex flex-col gap-2 lg:flex-row'>
             <Input
               placeholder='Kerusakan'

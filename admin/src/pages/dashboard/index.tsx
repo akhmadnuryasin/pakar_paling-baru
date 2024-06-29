@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -8,98 +8,52 @@ import {
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import ThemeSwitch from '@/components/theme-switch';
 import { Layout, LayoutBody, LayoutHeader } from '@/components/custom/layout';
-import { RecentSales } from './components/recent-sales';
 import { Breadcrumb, BreadcrumbItem } from '@/components/custom/breadcrumb';
 import { Link } from 'react-router-dom';
-import supabase from '@/supabaseClient';
-import { useAuth } from '../../auth-context';
-
-interface Announcement {
-  id: number;
-  judul: string;
-  isi: string;
-  dibuat_pada: string;
-}
-
-interface DashboardData {
-  jumlahMatapelajaran: number;
-  jumlahPengguna: number;
-  jumlahTugas: number;
-  jumlahPengumuman: number;
-  pengumuman: Announcement[];
-}
+import {
+  IconVirusSearch,
+  IconUsersGroup,
+  IconScale,
+  IconAbacus,
+  IconCarCrash,
+  IconRulerMeasure
+} from '@tabler/icons-react';
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const [dashboardData, setDashboardData] = useState<DashboardData>({
-    jumlahMatapelajaran: 0,
-    jumlahPengguna: 0,
-    jumlahTugas: 0,
-    jumlahPengumuman: 0,
-    pengumuman: [],
+  const [dashboardData, setDashboardData] = useState({
+    gejala: { name: 'Gejala', icon: 'IconVirusSearch', count: 0 },
+    kerusakan: { name: 'Kerusakan', icon: 'IconCarCrash', count: 0 },
+    probabilitas: { name: 'Probabilitas', icon: 'IconAbacus', count: 0 },
+    basis_pengetahuan: { name: 'Bobot Gejala', icon: 'IconScale', count: 0 },
+    rule_aturan: { name: 'Rule', icon: 'IconRulerMeasure', count: 0 },
+    users: { name: 'Pengguna', icon: 'IconUsersGroup', count: 0 }
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!user) {
-          throw new Error('User is not authenticated.');
-        }
+    fetchData();
+  }, []);
 
-        // Fetch jumlah matapelajaran dari tabel kursus
-        const { data: kursusData, error: kursusError } = await supabase
-          .from('kursus')
-          .select('id', { count: 'exact' });
-
-        if (kursusError) {
-          throw new Error(kursusError.message);
-        }
-
-        // Fetch jumlah pengguna dari tabel pengguna
-        const { data: penggunaData, error: penggunaError } = await supabase
-          .from('pengguna')
-          .select('id', { count: 'exact' });
-
-        if (penggunaError) {
-          throw new Error(penggunaError.message);
-        }
-
-        // Fetch jumlah tugas dari tabel tugas
-        const { data: tugasData, error: tugasError } = await supabase
-          .from('tugas')
-          .select('id', { count: 'exact' });
-
-        if (tugasError) {
-          throw new Error(tugasError.message);
-        }
-
-        // Fetch data pengumuman
-        const { data: pengumumanData, error: pengumumanError } = await supabase
-          .from('pengumuman')
-          .select('*');
-
-        if (pengumumanError) {
-          throw new Error(pengumumanError.message);
-        }
-
-        // Update state dengan data yang diambil dari supabase
-        setDashboardData({
-          jumlahMatapelajaran: kursusData.length,
-          jumlahPengguna: penggunaData.length,
-          jumlahTugas: tugasData.length,
-          jumlahPengumuman: pengumumanData.length,
-          pengumuman: pengumumanData,
-        });
-
-      } catch (error: any) {
-        console.error('Error fetching data:', error.message);
+  const fetchData = async () => {
+    try {
+      const response = await fetch('https://sistempakar-backendapp-ce3dc310e112.herokuapp.com/admin/dashboard'); 
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    };
-
-    if (user) {
-      fetchData();
+      const data = await response.json();
+      setDashboardData(prevDashboardData => ({
+        ...prevDashboardData,
+        gejala: { ...prevDashboardData.gejala, count: data.gejala.count },
+        kerusakan: { ...prevDashboardData.kerusakan, count: data.kerusakan.count },
+        probabilitas: { ...prevDashboardData.probabilitas, count: data.probabilitas.count },
+        basis_pengetahuan: { ...prevDashboardData.basis_pengetahuan, count: data.basis_pengetahuan.count },
+        rule_aturan: { ...prevDashboardData.rule_aturan, count: data.rule_aturan.count },
+        users: { ...prevDashboardData.users, count: data.users.count }
+      }));
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
     }
-  }, [user]);
+  };
+  
 
   const items = [
     { title: 'Dashboard', href: '/' },
@@ -118,6 +72,7 @@ const Dashboard = () => {
       )}
     </BreadcrumbItem>
   ));
+
   return (
     <Layout>
       {/* Top Heading */}
@@ -132,93 +87,101 @@ const Dashboard = () => {
       <LayoutBody className='pt-0 space-y-4'>
         <Tabs orientation='vertical' defaultValue='overview' className='space-y-4'>
           <TabsContent value='overview' className='space-y-4'>
-            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-              {/* Cards for various data */}
-              <Card>
-                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
-                  <CardTitle className='text-sm font-medium'>
-                    Pelajaran
-                  </CardTitle>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    className='w-4 h-4 text-muted-foreground'
-                  >
-                    <path d='M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6' />
-                  </svg>
-                </CardHeader>
-                <CardContent>
-                  <div className='text-2xl font-bold'>
-                    {dashboardData.jumlahMatapelajaran}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Materi Card */}
-              <Card>
-                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
-                  <CardTitle className='text-sm font-medium'>
-                    Pengguna
-                  </CardTitle>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    className='w-4 h-4 text-muted-foreground'
-                  >
-                    <path d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' />
-                    <circle cx='9' cy='7' r='4' />
-                    <path d='M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' />
-                  </svg>
-                </CardHeader>
-                <CardContent>
-                  <div className='text-2xl font-bold'>
-                    {dashboardData.jumlahPengguna}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Tugas Card */}
-              <Card>
-                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
-                  <CardTitle className='text-sm font-medium'>Pengumuman</CardTitle>
-                  <svg
-                    xmlns='http://www.w3.org/2000/svg'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    className='w-4 h-4 text-muted-foreground'
-                  >
-                    <rect width='20' height='14' x='2' y='5' rx='2' />
-                    <path d='M2 10h20' />
-                  </svg>
-                </CardHeader>
-                <CardContent>
-                  <div className='text-2xl font-bold'>
-                    {dashboardData.jumlahPengumuman}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
             <div className='grid grid-cols-1 gap-4 lg:grid-cols-7'>
-              <Card className='col-span-1 lg:col-span-8'>
+              {/* <Card className='col-span-1 lg:col-span-8'>
                 <CardHeader>
-                  <CardTitle>Pengumuman</CardTitle>
+                  <CardTitle>Selamat Datang Di Sistem Pakar Admin</CardTitle>
                 </CardHeader>
-                <CardContent className='pl-2'>
-                  <RecentSales data={dashboardData.pengumuman} />
+              </Card> */}
+            </div>
+            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+              {/* Gejala */}
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
+                  <CardTitle className='text-sm font-medium'>
+                    {dashboardData.gejala.name}
+                  </CardTitle>
+                  <IconVirusSearch className='w-4 h-4 text-muted-foreground' />
+                </CardHeader>
+                <CardContent>
+                  <div className='text-2xl font-bold'>
+                    {dashboardData.gejala.count}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Materi Kerusakan */}
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
+                  <CardTitle className='text-sm font-medium'>
+                    {dashboardData.kerusakan.name}
+                  </CardTitle>
+                  <IconCarCrash className='w-4 h-4 text-muted-foreground' />
+                </CardHeader>
+                <CardContent>
+                  <div className='text-2xl font-bold'>
+                    {dashboardData.kerusakan.count}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Probabilitas Card */}
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
+                  <CardTitle className='text-sm font-medium'>
+                    {dashboardData.probabilitas.name}
+                  </CardTitle>
+                  <IconAbacus className='w-4 h-4 text-muted-foreground' />
+                </CardHeader>
+                <CardContent>
+                  <div className='text-2xl font-bold'>
+                    {dashboardData.probabilitas.count}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Bobot Card */}
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
+                  <CardTitle className='text-sm font-medium'>
+                    {dashboardData.basis_pengetahuan.name}
+                  </CardTitle>
+                  <IconScale className='w-4 h-4 text-muted-foreground' />
+                </CardHeader>
+                <CardContent>
+                  <div className='text-2xl font-bold'>
+                    {dashboardData.basis_pengetahuan.count}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Rule Card */}
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
+                  <CardTitle className='text-sm font-medium'>
+                    {dashboardData.rule_aturan.name}
+                  </CardTitle>
+                  <IconRulerMeasure className='w-4 h-4 text-muted-foreground' />
+                </CardHeader>
+                <CardContent>
+                  <div className='text-2xl font-bold'>
+                    {dashboardData.rule_aturan.count}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Pengguna Card */}
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between pb-2 space-y-0'>
+                  <CardTitle className='text-sm font-medium'>
+                    {dashboardData.users.name}
+                  </CardTitle>
+                  <IconUsersGroup className='w-4 h-4 text-muted-foreground' />
+                </CardHeader>
+                <CardContent>
+                  <div className='text-2xl font-bold'>
+                    {dashboardData.users.count}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -230,4 +193,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

@@ -33,13 +33,13 @@ interface Kerusakan {
   id: string;
   kode_kerusakan: string;
   kode_gejala: string;
-  bobot_gejala: string;
+  nilai_gejala: string;
 }
 
 interface NewEntry {
   kode_kerusakan: string;
   kode_gejala: string;
-  bobot_gejala: string;
+  nilai_gejala: string;
 }
 
 export default function Gejala() {
@@ -52,7 +52,7 @@ export default function Gejala() {
   const [newEntry, setNewEntry] = useState<NewEntry>({
     kode_kerusakan: '',
     kode_gejala: '',
-    bobot_gejala: '',
+    nilai_gejala: '',
   });
 
   const { toast } = useToast()
@@ -78,13 +78,13 @@ export default function Gejala() {
 
       if (searchTerm) {
         filtered = filtered.filter(kerusakan =>
-          kerusakan.kode_kerusakan.toLowerCase().includes(searchTerm.toLowerCase())
+          kerusakan.kode_gejala.toLowerCase().includes(searchTerm.toLowerCase())
         );
       }
 
       const sorted = [...filtered].sort((a, b) => {
-        if (a.kode_kerusakan && b.kode_kerusakan) {
-          return sortOrder === 'ascending' ? a.kode_kerusakan.localeCompare(b.kode_kerusakan) : b.kode_kerusakan.localeCompare(a.kode_kerusakan);
+        if (a.kode_gejala && b.kode_gejala) {
+          return sortOrder === 'ascending' ? a.kode_gejala.localeCompare(b.kode_gejala) : b.kode_gejala.localeCompare(a.kode_gejala);
         } else {
           return 0;
         }
@@ -102,13 +102,13 @@ export default function Gejala() {
       setKerusakanList(kerusakanList.filter(kerusakan => kerusakan.id !== id));
       toast({
         title: "Sukses",
-        description: "Bobot gejala berhasil dihapus.",
+        description: "Nilai gejala berhasil dihapus.",
       })
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         toast({
           title: "Gagal",
-          description: "Terjadi kesalahan saat menghapus bobot gejala.",
+          description: "Terjadi kesalahan saat menghapus nilai gejala.",
         })
         // console.error('Error deleting kerusakan:', error.message);
       }
@@ -137,7 +137,7 @@ export default function Gejala() {
       const originalKerusakan = originalData[id];
       handleInputChange(originalKerusakan.kode_kerusakan, 'kode_kerusakan', id);
       handleInputChange(originalKerusakan.kode_gejala, 'kode_gejala', id);
-      handleInputChange(originalKerusakan.bobot_gejala, 'bobot_gejala', id);
+      handleInputChange(originalKerusakan.nilai_gejala, 'nilai_gejala', id);
     }
   };
 
@@ -156,14 +156,14 @@ export default function Gejala() {
       });
       toast({
         title: "Sukses",
-        description: "Bobot gejala berhasil diubah",
+        description: "Nilai gejala berhasil diubah",
       })
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         // console.error('Error updating kerusakan:', error.message);
         toast({
           title: "Gagal",
-          description: "Terjadi kesalahan saat mengubah bobot gejala.",
+          description: "Terjadi kesalahan saat mengubah nilai gejala.",
         })
       }
     }
@@ -196,17 +196,17 @@ export default function Gejala() {
       setNewEntry({
         kode_kerusakan: '',
         kode_gejala: '',
-        bobot_gejala: '',
+        nilai_gejala: '',
       });
       toast({
         title: "Sukses",
-        description: "Bobot gejala berhasil ditambahkan",
+        description: "Nilai gejala berhasil ditambahkan",
       })
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         toast({
           title: "Gagal",
-          description: "Terjadi kesalahan saat menambahkan bobot gejala.",
+          description: "Terjadi kesalahan saat menambahkan nilai gejala.",
         })
         // console.error('Error adding new entry:', error.message);
       }
@@ -215,7 +215,7 @@ export default function Gejala() {
 
   const items = [
     { title: 'Dashboard', href: '/' },
-    { title: 'Bobot Gejala' },
+    { title: 'Nilai Gejala' },
   ].map(({ href, title }) => (
     <BreadcrumbItem key={title}>
       {href ? (
@@ -266,22 +266,17 @@ export default function Gejala() {
         </div>
         <Separator className='shadow' />
         <div className='my-4'>
-          <h2 className='px-2 mb-4 font-medium text-muted-foreground'>Tambah Bobot Gejala</h2>
+          <h2 className='px-2 mb-4 font-medium text-muted-foreground'>Tambah Nilai Gejala</h2>
           <div className='flex flex-col gap-2 lg:flex-row'>
-            <Input
-              placeholder='Kode Kerusakan'
-              value={newEntry.kode_kerusakan}
-              onChange={(e) => handleNewInputChange(e.target.value, 'kode_kerusakan')}
-            />
             <Input
               placeholder='Kode Gejala'
               value={newEntry.kode_gejala}
               onChange={(e) => handleNewInputChange(e.target.value, 'kode_gejala')}
             />
             <Input
-              placeholder='Bobot Gejala'
-              value={newEntry.bobot_gejala}
-              onChange={(e) => handleNewInputChange(e.target.value, 'bobot_gejala')}
+              placeholder='Nilai Gejala'
+              value={newEntry.nilai_gejala}
+              onChange={(e) => handleNewInputChange(e.target.value, 'nilai_gejala')}
             />
             <Button onClick={addNewEntry}>Tambah</Button>
           </div>
@@ -290,14 +285,11 @@ export default function Gejala() {
         <Table className='min-w-full bg-transparent rounded-md'>
           <TableHeader>
             <TableRow>
-              <TableHead className='py-3 pr-6 text-xs font-medium tracking-wider text-left text-gray-500 uppercase rounded-md'>
-                Kode Kerusakan
-              </TableHead>
               <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase rounded-md'>
                 Kode Gejala
               </TableHead>
               <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase rounded-md'>
-                Bobot Gejala
+                Nilai Gejala
               </TableHead>
               <TableHead className='py-3 pr-12 text-xs font-medium tracking-wider text-right text-gray-500 uppercase rounded-md'>
                 Actions
@@ -307,20 +299,17 @@ export default function Gejala() {
           <TableBody className='bg-transparent divide-y'>
             {filteredKerusakan.map((kerusakan) => (
               <TableRow key={kerusakan.id}>
-                <TableCell className='py-4 pr-6 text-sm text-gray-500 rounded-md whitespace-nowrap'>
-                  {kerusakan.kode_kerusakan}
-                </TableCell>
                 <TableCell className='px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>
                   {kerusakan.kode_gejala}
                 </TableCell>
                 <TableCell className='px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>
                   {editingRows[kerusakan.id] ? (
                     <Input
-                      value={kerusakan.bobot_gejala}
-                      onChange={(e) => handleInputChange(e.target.value, 'bobot_gejala', kerusakan.id)}
+                      value={kerusakan.nilai_gejala}
+                      onChange={(e) => handleInputChange(e.target.value, 'nilai_gejala', kerusakan.id)}
                     />
                   ) : (
-                    kerusakan.bobot_gejala
+                    kerusakan.nilai_gejala
                   )}
                 </TableCell>
                 <TableCell className='flex justify-end px-6 py-4 text-sm text-gray-500 rounded-md whitespace-nowrap'>

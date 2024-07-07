@@ -54,7 +54,7 @@ export const sidelinks: SideLink[] = [
     icon: <IconAbacus size={18} />,
   },
   {
-    title: 'Bobot Gejala',
+    title: 'Nilai Gejala',
     label: '',
     href: '/knowledge_base',
     icon: <IconScale size={18} />,

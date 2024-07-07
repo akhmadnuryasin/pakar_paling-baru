@@ -24,7 +24,7 @@ const Dashboard = () => {
     gejala: { name: 'Gejala', icon: 'IconVirusSearch', count: 0 },
     kerusakan: { name: 'Kerusakan', icon: 'IconCarCrash', count: 0 },
     probabilitas: { name: 'Probabilitas', icon: 'IconAbacus', count: 0 },
-    basis_pengetahuan: { name: 'Bobot Gejala', icon: 'IconScale', count: 0 },
+    basis_pengetahuan: { name: 'Nilai Gejala', icon: 'IconScale', count: 0 },
     rule_aturan: { name: 'Rule', icon: 'IconRulerMeasure', count: 0 },
     users: { name: 'Pengguna', icon: 'IconUsersGroup', count: 0 }
   });

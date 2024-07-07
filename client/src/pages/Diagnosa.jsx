@@ -3,7 +3,6 @@ import axios from "axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { FormProvider, useForm } from "react-hook-form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { FormControl, FormLabel } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,23 +47,19 @@ export function Diagnosa() {
   };
 
   const handleDiagnoseSelect = (diagnose) => {
-    const selectedIndex = selectedDiagnoses.indexOf(diagnose);
-    let newSelectedDiagnoses = [];
+    const isSelected = selectedDiagnoses.some(
+      (selected) => selected.kode_gejala === diagnose.kode_gejala
+    );
 
-    if (selectedIndex === -1) {
-      newSelectedDiagnoses = [...selectedDiagnoses, diagnose];
-    } else if (selectedIndex === 0) {
-      newSelectedDiagnoses = selectedDiagnoses.slice(1);
-    } else if (selectedIndex === selectedDiagnoses.length - 1) {
-      newSelectedDiagnoses = selectedDiagnoses.slice(0, -1);
-    } else if (selectedIndex > 0) {
-      newSelectedDiagnoses = [
-        ...selectedDiagnoses.slice(0, selectedIndex),
-        ...selectedDiagnoses.slice(selectedIndex + 1),
-      ];
+    if (!isSelected) {
+      setSelectedDiagnoses((prevSelected) => [...prevSelected, diagnose]);
+    } else {
+      setSelectedDiagnoses((prevSelected) =>
+        prevSelected.filter(
+          (selected) => selected.kode_gejala !== diagnose.kode_gejala
+        )
+      );
     }
-
-    setSelectedDiagnoses(newSelectedDiagnoses);
   };
 
   const handleDiagnoseSubmit = () => {
@@ -116,7 +111,7 @@ export function Diagnosa() {
                   <TableBody>
                     {loadingDiagnosesData ? (
                       <TableRow>
-                        <TableCell colSpan={3} className="text-center ">
+                        <TableCell colSpan={3} className="text-center">
                           Loading...
                         </TableCell>
                       </TableRow>
@@ -128,12 +123,23 @@ export function Diagnosa() {
                         >
                           <TableCell className="p-2 pl-6">
                             <FormControl>
-                              <Checkbox
-                                key={index}
-                                checked={selectedDiagnoses.includes(diagnose)}
-                                onClick={() => handleDiagnoseSelect(diagnose)}
-                                className="border-white rounded"
-                              />
+                              <label
+                                htmlFor={`checkbox-${diagnose.kode_gejala}`}
+                              >
+                                <input
+                                  id={`checkbox-${diagnose.kode_gejala}`}
+                                  type="checkbox"
+                                  checked={selectedDiagnoses.some(
+                                    (selected) =>
+                                      selected.kode_gejala ===
+                                      diagnose.kode_gejala
+                                  )}
+                                  onChange={() =>
+                                    handleDiagnoseSelect(diagnose)
+                                  }
+                                  className="border-white rounded"
+                                />
+                              </label>
                             </FormControl>
                           </TableCell>
                           <TableCell>
@@ -181,79 +187,45 @@ export function Diagnosa() {
                 Sedang melakukan diagnosa, harap tunggu...
               </div>
             ) : (
-              <>
-                {/* Tampilkan gejala yang digunakan */}
-                {diagnoseResult &&
-                  diagnoseResult.length > 0 &&
-                  diagnoseResult[0].Gejala && (
+              diagnoseResult && (
+                <>
+                  {/* Tampilkan gejala yang digunakan */}
+                  {diagnoseResult.gejala_user && (
                     <div className="p-4">
                       <p className="mb-4 font-bold">Gejala Yang Di Diagnosa</p>
                       <div className="flex flex-wrap gap-2">
-                        {diagnoseResult[0].Gejala.map((symptom, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="font-semibold text-white border-accent"
-                          >
-                            {symptom}
-                          </Badge>
-                        ))}
+                        {diagnoseResult.gejala_user.map((symptom, index) => {
+                          // Ambil hanya bagian kode gejala (misal: "G02", "G05", "G11")
+                          const gejalaCode = symptom.split(":")[0].trim();
+                          return (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="font-semibold text-white border-accent"
+                            >
+                              {gejalaCode}
+                            </Badge>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
 
-                {/* Tampilkan presentase nilai prediksi kerusakan */}
-                {diagnoseResult &&
-                  diagnoseResult.length > 0 &&
-                  diagnoseResult[diagnoseResult.length - 2][
-                    "Presentase Nilai Prediksi Kerusakan"
-                  ] && (
+                  {/* Tampilkan hasil */}
+                  {diagnoseResult.hasil && (
                     <div className="p-4">
-                      <p className="mb-4 font-bold">Persentasi Kerusakan</p>
+                      <p className="mb-4 font-bold">Hasil Diagnosa</p>
                       <ul>
-                        {Object.entries(
-                          diagnoseResult[diagnoseResult.length - 2][
-                            "Presentase Nilai Prediksi Kerusakan"
-                          ]
-                        ).map(([kode, { persentasi, nama_kerusakan }]) => (
-                          <li key={kode} className="mb-2">
-                            {persentasi} Menderita {nama_kerusakan} ( {kode} )
+                        {diagnoseResult.hasil.map((hasil, index) => (
+                          <li key={index} className="mb-2">
+                            {hasil}
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
-
-                {/* Tampilkan nilai dari kunci "Hasil" pada objek terakhir jika ada */}
-                {diagnoseResult &&
-                  diagnoseResult.length > 0 &&
-                  diagnoseResult[diagnoseResult.length - 1].Hasil && (
-                    <div className="p-4">
-                      <p className="mb-4 font-bold">Hasil Diagnosa</p>
-                      <p>{diagnoseResult[diagnoseResult.length - 1].Hasil}</p>
-                    </div>
-                  )}
-                {/* Jika diagnoseResult kosong atau objek terakhir tidak memiliki Hasil */}
-                {(!diagnoseResult ||
-                  diagnoseResult.length === 0 ||
-                  !diagnoseResult[diagnoseResult.length - 1].Hasil) && (
-                  <div className="p-4">
-                    {/* <p>Belum ada data diagnosa.</p> */}
-                  </div>
-                )}
-
-                {/* Jika objek terakhir dalam diagnoseResult tidak memiliki Hasil */}
-                {diagnoseResult &&
-                  diagnoseResult.length > 0 &&
-                  !diagnoseResult[diagnoseResult.length - 1].Hasil &&
-                  !diagnoseResult[diagnoseResult.length - 2][
-                    "Presentase Nilai Prediksi Kerusakan"
-                  ] && (
-                    <div className="p-4">
-                      <p>Hasil tidak tersedia.</p>
-                    </div>
-                  )}
-              </>
+                </>
+              )
             )}
           </ScrollArea>
         </div>

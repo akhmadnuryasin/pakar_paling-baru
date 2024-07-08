@@ -240,7 +240,7 @@ export default function Probabilitas() {
           <TableHeader>
             <TableRow>
               <TableHead className='py-3 pr-6 text-xs font-medium tracking-wider text-left text-gray-500 uppercase rounded-md'>
-                Kode Probabilitas
+                Kode Kerusakan
               </TableHead>
               <TableHead className='px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase rounded-md'>
                 Probabilitas
